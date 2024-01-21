@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "edp-vmemo-subclip"
+version = "0.1.0"
+description = ""
+authors = ["k.hayashi <kazuki618@384.jp>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pygame = "^2.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
