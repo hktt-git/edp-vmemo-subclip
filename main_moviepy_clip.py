@@ -1,17 +1,19 @@
 from moviepy.editor import *
 import threading
 import time
-import qrcode
+# import qrcode
 import pygame
 from pygame.locals import *
 
 def main():
+    MOVIE_DIRECTORY = "./movie"
+
     OUTPUT_DIRECTORY = "./output"
     OUTPUT_CLIP_DURATION = 5
 
     time_start = time.perf_counter()
 
-    video_for_edit = VideoFileClip("sample_copy.mp4")
+    video_for_edit = VideoFileClip(f"{MOVIE_DIRECTORY}/sample_copy.mp4")
 
     player_thread = threading.Thread(target=play_video)
 
@@ -40,12 +42,12 @@ def main():
       
       print(url)
       
-      qrcode.make(url).save(f"{OUTPUT_DIRECTORY}/qrcode{counter}.png")
+      # qrcode.make(url).save(f"{OUTPUT_DIRECTORY}/qrcode{counter}.png")
       
       counter += 1
 
 def play_video():
-  video = VideoFileClip("sample.mp4")
+  video = VideoFileClip(f"{MOVIE_DIRECTORY}/sample.mp4")
   
   time_start = time.perf_counter()
   
