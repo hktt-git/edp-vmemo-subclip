@@ -9,6 +9,8 @@ import serial
 import serial.tools.list_ports
 
 MOVIE_DIRECTORY = "./movie"
+OUTPUT_DIRECTORY = "./output"
+OUTPUT_CLIP_DURATION = 5
 
 def imdisplay(imarray, screen=None):
     """Splashes the given image array on the given pygame screen """
@@ -54,7 +56,7 @@ serialPort = serial.Serial(portname, 115200, timeout=0)
 
 pygame.init()
 
-DISPLAY_SIZE = pygame.display.get_desktop_sizes()[0]
+DISPLAY_SIZE = pygame.display.get_desktop_sizes()[-1]
 print(DISPLAY_SIZE)
 
 screen = pygame.display.set_mode(DISPLAY_SIZE, FULLSCREEN & SCALED)
@@ -75,6 +77,8 @@ text_start = None
 
 
 clip = VideoFileClip(f"{MOVIE_DIRECTORY}/sample_copy.mp4")
+video_for_edit = VideoFileClip(f"{MOVIE_DIRECTORY}/sample.mp4")
+
 # clip = resize(clip, DISPLAY_SIZE)
 fps=15
 
@@ -105,6 +109,8 @@ if audio:  # synchronize with audio
     audioFlag.wait()  # wait for the audio to be ready
 
 t0 = time.time()
+
+counter = 1
 
 for t in np.arange(1.0 / fps, clip.duration-.001, 1.0 / fps):
     
@@ -142,6 +148,18 @@ for t in np.arange(1.0 / fps, clip.duration-.001, 1.0 / fps):
        code = int(serialData)
        if code == 73:
         text_start = pygame.time.get_ticks()
+
+        def task():
+          global counter
+          clip_end_position = t1 - t0
+          print(clip_end_position)
+          clip_start_position = max(clip_end_position - OUTPUT_CLIP_DURATION, 0)
+          clipped_video = video_for_edit.subclip(clip_start_position, clip_end_position)
+          clipped_video.write_videofile(f"{OUTPUT_DIRECTORY}/output{counter}.mp4")
+          counter += 1
+
+        thread = threading.Thread(target=task)
+        thread.start()
 
     pygame.display.flip()
 
