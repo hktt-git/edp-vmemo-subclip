@@ -3,21 +3,20 @@
 ## 起動方法
 
 ```sh
-
-$ pip install poetry
-
-$ cd ./player
-
-$ poetry install
-
-$ poetru run python main_moviepy_clip.py
-
+pip install poetry
+cd ./player
+poetry install
+poetry run python main_moviepy_clip.py
 ```
 
-## ディレクトリ
+## `.env`
 
-- `./player/movie/sample.mp4` : 元の動画
+- `VMEMO_MOVIE_DIR` : 再生する動画のディレクトリパス
 
-- `./player/movie/sample_copy.mp4` : 元の動画のコピー
+- `VMEMO_OUTPUT_DIR` : 切り抜き動画を保存するパス
 
-- `./player/output` : 切り抜いた動画
+- `VMEMO_CLIP_DURATION` : 切り抜き動画の長さ(秒)
+
+- `VMEMO_DISPLAY` : 表示するディスプレイの番号
+
+- `VMEMO_SERIAL_PORT` : リモコン受信機のシリアルポート
