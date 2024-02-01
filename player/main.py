@@ -158,8 +158,12 @@ def game_loop(clip: VideoClip, serial: serial.Serial, display:int, subclip_req: 
     player_thread = threading.Thread(target=player, args=(clip, player_screen, player_lock, player_flag))
     player_thread.start()
 
-    font = pygame.font.SysFont("Yu Gothic", 50, True)
-    text = font.render("Vmemoを記録中です", True, (0,0,200))
+    # font = pygame.font.SysFont("Yu Gothic", 50, True)
+    # text = font.render("Vmemoを記録中です", True, (0,0,200))
+    
+    progress_image = pygame.image.load("progress.png")
+    mag = (screen.get_height() / 10) / progress_image.get_height()
+    progress_image = pygame.transform.smoothscale(progress_image, (progress_image.get_width() * mag, progress_image.get_height() * mag))
 
     ticker = pygame.time.Clock()
 
@@ -198,11 +202,12 @@ def game_loop(clip: VideoClip, serial: serial.Serial, display:int, subclip_req: 
             screen.blit(player_screen, (0, 0))
 
         if subclip_req.qsize():
-            rect_size = (text.get_width(), text.get_height())
-            rect_upper_left_pos = (0, 40)
-            pygame.draw.rect(screen, (255,255,255), (dp_size[0] - rect_size[0] - rect_upper_left_pos[0], rect_upper_left_pos[1], rect_size[0], rect_size[1]))
-            screen.blit(text, (dp_size[0] - rect_size[0] - rect_upper_left_pos[0], rect_upper_left_pos[1]))
-
+            # rect_size = (text.get_width(), text.get_height())
+            # rect_upper_left_pos = (0, 40)
+            # pygame.draw.rect(screen, (255,255,255), (dp_size[0] - rect_size[0] - rect_upper_left_pos[0], rect_upper_left_pos[1], rect_size[0], rect_size[1]))
+            # screen.blit(text, (dp_size[0] - rect_size[0] - rect_upper_left_pos[0], rect_upper_left_pos[1]))
+            screen.blit(progress_image, (screen.get_width() - progress_image.get_width(), screen.get_height() / 20))
+            
         pygame.display.flip()
 
 def main():
