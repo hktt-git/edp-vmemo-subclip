@@ -65,50 +65,43 @@ def player(clip: VideoClip, screen: pygame.Surface, lock: threading.RLock, flag:
     audio_buffersize=3000
     audio_nbytes=2
 
-    audiothread = threading.Thread(target=clip.audio.preview,
-                                    args=(audio_fps,
-                                          audio_buffersize,
-                                          audio_nbytes,
-                                          audioFlag, videoFlag))
-    audiothread.start()
+    while True:
+        videoFlag.clear()
+        audioFlag.clear()
+        
+        audiothread = threading.Thread(target=clip.audio.preview,
+                                        args=(audio_fps,
+                                              audio_buffersize,
+                                              audio_nbytes,
+                                              audioFlag, videoFlag))
+        
+        audiothread.start()
 
-    img = clip.get_frame(0)
-
-    imdisplay(img, screen)
-    
-    if audio:  # synchronize with audio
-        videoFlag.set()  # say to the audio: video is ready
-        audioFlag.wait()  # wait for the audio to be ready
-
-    t0 = time.time()
-
-    for t in np.arange(1.0 / fps, clip.duration-.001, 1.0 / fps):
-        img = clip.get_frame(t)
-
-        t1 = time.time()
-        time.sleep(max(0, t - (t1-t0)))
+        img = clip.get_frame(0)
 
         imdisplay(img, screen)
-        time_ref = t
+        
+        if audio:  # synchronize with audio
+            videoFlag.set()  # say to the audio: video is ready
+            audioFlag.wait()  # wait for the audio to be ready
 
-        if flag.is_set():
-            if audio:
+        t0 = time.time()
+
+        for t in np.arange(1.0 / fps, clip.duration-.001, 1.0 / fps):
+            img = clip.get_frame(t)
+
+            t1 = time.time()
+            time.sleep(max(0, t - (t1-t0)))
+
+            imdisplay(img, screen)
+            time_ref = t
+
+            if flag.is_set():
                 videoFlag.clear()
-            return
-
-def open_serial():
-    ports = list(serial.tools.list_ports.comports())
-
-    if not len(ports):
-        print("Serial device not found")
-        exit()
-
-    portname = ports[0].name
-    print(portname)
-
-    serialPort = serial.Serial(portname, 115200, timeout=0)
-
-    return serialPort
+                return
+        
+        videoFlag.clear()
+        audiothread.join()
 
 def subclipper(request: queue.Queue, clip: VideoClip, clip_names: list, duration: float, output: str):
     while True:
@@ -127,9 +120,17 @@ def subclipper(request: queue.Queue, clip: VideoClip, clip_names: list, duration
             
             if clip_start_position < timestamp:
                 break
+        
+        counter = 1
+        while True:
+            output_filename_with_index = f"{os.path.splitext(output_filename)[0]}{counter}.mp4"
+            temp_file_path = f"{TEMP_OUTPUT_DIR}/{output_filename_with_index}"
+            file_path = f"{output}/{output_filename_with_index}"
+            
+            if not os.path.exists(file_path):
+                break
+            counter += 1
 
-        temp_file_path = f"{TEMP_OUTPUT_DIR}/{output_filename}"
-        file_path = f"{output}/{output_filename}"
 
         if not os.path.exists(TEMP_OUTPUT_DIR):
             os.mkdir(TEMP_OUTPUT_DIR)
@@ -149,7 +150,7 @@ def game_loop(clip: VideoClip, serial: serial.Serial, display:int, subclip_req: 
     pygame.init()
 
     dp_size = pygame.display.get_desktop_sizes()[display]
-    screen = pygame.display.set_mode(dp_size, FULLSCREEN & SCALED, display)
+    screen = pygame.display.set_mode(dp_size, FULLSCREEN & SCALED, display=display)
     
     player_lock = threading.RLock()
     player_screen = screen.copy()
@@ -211,6 +212,7 @@ def main():
     VMEMO_OUTPUT_DIR = os.getenv("VMEMO_OUTPUT_DIR")
     VMEMO_CLIP_DURATION = float(os.getenv("VMEMO_CLIP_DURATION"))
     VMEMO_DISPLAY = int(os.getenv("VMEMO_DISPLAY"))
+    VMEMO_SERIAL_PORT = os.getenv("VMEMO_SERIAL_PORT")
 
     if os.path.exists(TEMP_DIR):
         shutil.rmtree(TEMP_DIR)
@@ -223,7 +225,20 @@ def main():
 
     print(clip_names)
 
-    serialPort = open_serial()
+    ports = list(serial.tools.list_ports.comports())
+    print(list(map(lambda p: p.name, ports)))
+    
+    try:
+        if VMEMO_SERIAL_PORT == "" and len(ports):
+            serialPort = serial.Serial(ports[0].name, 115200, timeout=0)
+        else:
+            serialPort = serial.Serial(VMEMO_SERIAL_PORT, 115200, timeout=0)
+        print(serialPort.name)
+        if not serialPort.is_open:
+            serialPort.open()
+    except:
+        print("Cannot open serial port")
+        return
 
     subclip_req = queue.Queue()
     subclipper_thread = threading.Thread(target=subclipper, args=[subclip_req, editing_clip, clip_names, VMEMO_CLIP_DURATION, VMEMO_OUTPUT_DIR])
