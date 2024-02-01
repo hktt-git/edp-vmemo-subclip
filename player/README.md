@@ -6,7 +6,7 @@
 pip install poetry
 cd ./player
 poetry install
-poetry run python main_moviepy_clip.py
+poetry run python main.py
 ```
 
 ## `.env`
